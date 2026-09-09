@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>OceanScope — Ocean Data, From Surface to Depth</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="project.css">
+</head>
+<body>
+
+<!-- ============ TOAST ============ -->
+<div class="toast" id="toast"></div>
+
+<!-- ============ LANDING ============ -->
+<div class="view active" id="view-landing">
+  <canvas id="landing-canvas"></canvas>
+  <div class="landing-nav">
+    <div class="brand"><span class="brand-mark"></span>OceanScope</div>
+    <div class="landing-nav-links">
+      <span onclick="scrollToFeatures()">How It Works</span>
+      <span onclick="goTo('explore')">Explore</span>
+      <span onclick="goTo('analysis')">Analysis</span>
+    </div>
+  </div>
+  <div class="hero">
+    <div class="hero-eyebrow">HYCOM · ARGO · GLIDER — INDIAN OCEAN PROTOTYPE</div>
+    <h1>Ocean data, from<br><em>surface to depth.</em></h1>
+    <p>Explore ocean models, observations and their differences in an interactive 4D environment — built for faster scientific decision-making.</p>
+    <div class="hero-ctas">
+      <button class="btn btn-primary" onclick="goTo('explore')">Explore Ocean</button>
+      <button class="btn btn-ghost" onclick="scrollToFeatures()">How It Works</button>
+    </div>
+  </div>
+  <div class="feature-grid" id="feature-grid">
+    <div class="feature-card"><div class="fi">◈</div><h4>3D Ocean Visualization</h4><p>Rotate, zoom and slice through model fields rendered as a live volumetric surface.</p></div>
+    <div class="feature-card"><div class="fi">↕</div><h4>Depth &amp; Time Exploration</h4><p>Move through the water column and animate change day by day.</p></div>
+    <div class="feature-card"><div class="fi">⇄</div><h4>Model vs Observation</h4><p>Check ARGO and glider readings against HYCOM at the same place, depth and time.</p></div>
+    <div class="feature-card"><div class="fi">⚡</div><h4>Rapid Understanding</h4><p>An instant plain-language summary of what the current view actually shows.</p></div>
+  </div>
+  <div class="principle-strip">
+    <p>From raw ocean data → to <strong>meaningful scientific insight.</strong></p>
+  </div>
+</div>
+
+<!-- ============ EXPLORE ============ -->
+<div class="view" id="view-explore">
+  <div class="topbar">
+    <div class="topbar-left">
+      <div class="brand" style="cursor:pointer" onclick="goTo('landing')"><span class="brand-mark"></span>OceanScope</div>
+      <div class="topbar-nav">
+        <button data-nav="explore" class="active" onclick="goTo('explore')">Explore</button>
+        <button data-nav="compare" onclick="goTo('compare')">Compare</button>
+        <button data-nav="observations" onclick="goTo('explore');openArgoList()">Observations</button>
+        <button data-nav="analysis" onclick="goTo('analysis')">Analysis</button>
+        <button data-nav="about" onclick="openAbout()">About</button>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <div class="status-pill"><span class="status-dot"></span>Mock data · connected</div>
+      <div class="avatar">KH</div>
+    </div>
+  </div>
+
+  <div class="explore-grid">
+    <!-- LEFT CONTROL PANEL -->
+    <div id="control-panel" class="scroll-thin">
+      <div class="panel-section">
+        <div class="panel-label">DATASET</div>
+        <div class="field">
+          <label>Model</label>
+          <select id="sel-model">
+            <option>HYCOM</option>
+            <option disabled>ROMS (coming soon)</option>
+            <option disabled>NEMO (coming soon)</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Variable</label>
+          <select id="sel-variable">
+            <option>Temperature</option>
+            <option>Salinity</option>
+            <option>Current</option>
+            <option>Chlorophyll</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Region</label>
+          <select id="sel-region">
+            <option>Arabian Sea</option>
+            <option>Bay of Bengal</option>
+            <option>Indian Ocean</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="panel-section">
+        <div class="panel-label">TIME</div>
+        <div class="readout"><span id="time-label" class="val mono">25 Aug 2026</span><span class="status-tag status-exact" id="time-status">EXACT</span></div>
+        <div class="slider-wrap">
+          <input type="range" id="time-slider" min="0" max="6" step="1" value="0">
+          <div class="slider-scale"><span>Day 1</span><span>Day 7</span></div>
+        </div>
+        <div class="transport-row">
+          <button id="btn-play" onclick="togglePlay()">▶ Play</button>
+          <button onclick="stepTime(-1)">⏮ Back</button>
+          <button onclick="resetView()">⟳ Reset</button>
+        </div>
+      </div>
+
+      <div class="panel-section">
+        <div class="panel-label">DEPTH</div>
+        <div class="readout"><span id="depth-label" class="val mono">0 m</span><span class="status-tag status-exact" id="depth-status">EXACT</span></div>
+        <div class="slider-wrap">
+          <input type="range" id="depth-slider" min="0" max="1000" step="5" value="0">
+          <div class="slider-scale"><span>0 m</span><span>1000 m</span></div>
+        </div>
+        <div style="font-size:11.5px;color:var(--mist);margin-top:6px;line-height:1.5;" id="depth-interp-note"></div>
+      </div>
+
+      <div class="panel-section">
+        <div class="panel-label">VISUALIZATION</div>
+        <div class="field">
+          <label>Color palette</label>
+          <select id="sel-palette">
+            <option>Turbo</option>
+            <option>Viridis</option>
+            <option>Plasma</option>
+            <option>Cool-Warm</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Vertical exaggeration <span class="mono" id="vexag-val" style="color:var(--tide-bright)">1×</span></label>
+          <input type="range" id="sel-vexag" min="1" max="4" step="1" value="0">
+        </div>
+        <div class="field">
+          <label>Opacity <span class="mono" id="opacity-val" style="color:var(--tide-bright)">100%</span></label>
+          <input type="range" id="sel-opacity" min="20" max="100" step="5" value="100">
+        </div>
+      </div>
+
+      <div class="panel-section">
+        <div class="panel-label">OVERLAYS</div>
+        <div class="viz-toggle-row">
+          <div class="toggle-row">Model field <div class="switch on" id="tog-model" onclick="toggleSwitch(this,'model')"></div></div>
+          <div class="toggle-row">ARGO floats <div class="switch on" id="tog-argo" onclick="toggleSwitch(this,'argo')"></div></div>
+          <div class="toggle-row">Gliders <div class="switch" id="tog-glider" onclick="toggleSwitch(this,'glider')"></div></div>
+          <div class="toggle-row">Anomaly flags <div class="switch on" id="tog-anomaly" onclick="toggleSwitch(this,'anomaly')"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MAIN VIEWER -->
+    <div id="viewer-wrap">
+      <button id="mobile-panel-toggle" class="icon-btn" onclick="document.getElementById('control-panel').classList.toggle('open')">☰</button>
+      <button class="rapid-btn" onclick="openRapidUnderstanding()">⚡ Rapid Understanding</button>
+      <div class="viewer-topbar">
+        <div class="viewer-badge">
+          <div class="k">REGION</div>
+          <div class="v" id="badge-region">Arabian Sea</div>
+        </div>
+        <div class="view-mode-row">
+          <button class="active" id="mode-3d" onclick="setViewMode('3d')">3D View</button>
+          <button id="mode-slice" onclick="setViewMode('slice')">Slice View</button>
+          <button id="mode-iso" onclick="setViewMode('iso')">Isosurface</button>
+        </div>
+      </div>
+      <canvas id="viewer-canvas"></canvas>
+      <div class="legend">
+        <div class="k mono" style="font-size:10.5px;color:var(--mist)" id="legend-title">TEMPERATURE (°C)</div>
+        <div class="legend-bar" id="legend-bar"></div>
+        <div class="legend-labels"><span id="legend-min">10</span><span id="legend-max">30</span></div>
+      </div>
+      <div class="viewer-actions">
+        <button class="icon-btn" title="Data provenance" onclick="openProvenance()">ⓘ</button>
+        <button class="icon-btn" title="Export" onclick="openExport()">⇩</button>
+        <button class="icon-btn" title="Data quality" onclick="openQuality()">◎</button>
+      </div>
+      <div class="tooltip-card" id="tooltip" style="display:none"></div>
+    </div>
+
+    <!-- ARGO / DETAIL PANEL -->
+    <div id="argo-panel" class="scroll-thin">
+      <div id="argo-empty-state" class="argo-empty">
+        <div class="ico">◉</div>
+        Click an ARGO float, glider or CTD marker in the viewer to inspect its profile and compare it with the model.
+      </div>
+      <div id="argo-content" style="display:none"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ COMPARE VIEW ============ -->
+<div class="view" id="view-compare">
+  <div class="topbar">
+    <div class="topbar-left">
+      <div class="brand" style="cursor:pointer" onclick="goTo('landing')"><span class="brand-mark"></span>OceanScope</div>
+      <div class="topbar-nav">
+        <button data-nav="explore" onclick="goTo('explore')">Explore</button>
+        <button data-nav="compare" class="active" onclick="goTo('compare')">Compare</button>
+        <button data-nav="observations" onclick="goTo('explore');openArgoList()">Observations</button>
+        <button data-nav="analysis" onclick="goTo('analysis')">Analysis</button>
+        <button data-nav="about" onclick="openAbout()">About</button>
+      </div>
+    </div>
+    <div class="topbar-right"><div class="status-pill"><span class="status-dot"></span>Mock data · connected</div><div class="avatar">KH</div></div>
+  </div>
+  <div class="compare-wrap">
+    <div class="compare-head">
+      <div><h2>Model vs Observation</h2><p style="color:var(--mist);font-size:13.5px;margin-top:4px;">Check a HYCOM value against a real instrument reading before trusting the gap between them.</p></div>
+      <div class="compare-selectors">
+        <div class="field"><label>Observation</label>
+          <select id="cmp-float"></select>
+        </div>
+        <div class="field"><label>Variable</label>
+          <select id="cmp-variable"><option>Temperature</option><option>Salinity</option></select>
+        </div>
+        <div class="field"><label>Depth</label>
+          <select id="cmp-depth"></select>
+        </div>
+      </div>
+    </div>
+
+    <div class="eligibility-card" id="eligibility-card"></div>
+
+    <div class="compare-cols" id="compare-cols"></div>
+
+    <div class="insight-strip" id="compare-insight"></div>
+
+    <div style="display:flex;gap:10px;margin-top:20px;">
+      <button class="btn btn-ghost btn-sm" onclick="openProvenance()">View Data Provenance</button>
+      <button class="btn btn-ghost btn-sm" onclick="openQuality()">View Data Quality</button>
+      <button class="btn btn-primary btn-sm" onclick="openExport()">Export Comparison</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ ANALYSIS VIEW ============ -->
+<div class="view" id="view-analysis">
+  <div class="topbar">
+    <div class="topbar-left">
+      <div class="brand" style="cursor:pointer" onclick="goTo('landing')"><span class="brand-mark"></span>OceanScope</div>
+      <div class="topbar-nav">
+        <button data-nav="explore" onclick="goTo('explore')">Explore</button>
+        <button data-nav="compare" onclick="goTo('compare')">Compare</button>
+        <button data-nav="observations" onclick="goTo('explore');openArgoList()">Observations</button>
+        <button data-nav="analysis" class="active" onclick="goTo('analysis')">Analysis</button>
+        <button data-nav="about" onclick="openAbout()">About</button>
+      </div>
+    </div>
+    <div class="topbar-right"><div class="status-pill"><span class="status-dot"></span>Mock data · connected</div><div class="avatar">KH</div></div>
+  </div>
+  <div class="analysis-wrap">
+    <h2 style="margin-bottom:6px;">Analysis</h2>
+    <p style="color:var(--mist);font-size:13.5px;margin-bottom:18px;">Interactive charts built from the same mock dataset driving the 3D view.</p>
+    <div class="analysis-controls">
+      <div class="field"><label>Region</label><select id="an-region"><option>Arabian Sea</option><option>Bay of Bengal</option><option>Indian Ocean</option></select></div>
+      <div class="field"><label>Observation</label><select id="an-float"></select></div>
+      <div class="field"><label>Time</label><select id="an-day"></select></div>
+      <div class="field" style="display:flex;align-items:flex-end;"><button class="btn btn-primary btn-sm" onclick="renderAnalysisCharts()">Update charts</button></div>
+    </div>
+    <div class="chart-grid">
+      <div class="chart-card"><h4>Temperature vs Depth</h4><div class="cc-inner"><canvas id="chart-temp-depth"></canvas></div></div>
+      <div class="chart-card"><h4>Salinity vs Depth</h4><div class="cc-inner"><canvas id="chart-sal-depth"></canvas></div></div>
+      <div class="chart-card"><h4>Model vs Observation (Temperature)</h4><div class="cc-inner"><canvas id="chart-model-obs"></canvas></div></div>
+      <div class="chart-card"><h4>Difference vs Depth</h4><div class="cc-inner"><canvas id="chart-diff-depth"></canvas></div></div>
+      <div class="chart-card" style="grid-column:1/-1;"><h4>Variable vs Time (50 m)</h4><div class="cc-inner"><canvas id="chart-var-time"></canvas></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ MODALS ============ -->
+<div class="modal-overlay" id="modal-provenance">
+  <div class="modal-box">
+    <div class="modal-head"><h3>Data Provenance</h3><button class="modal-close" onclick="closeModal('modal-provenance')">✕</button></div>
+    <div id="provenance-body"></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-quality">
+  <div class="modal-box">
+    <div class="modal-head"><h3>Data Quality</h3><button class="modal-close" onclick="closeModal('modal-quality')">✕</button></div>
+    <div id="quality-body"></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-rapid">
+  <div class="modal-box wide">
+    <div class="modal-head"><h3>⚡ Rapid Understanding</h3><button class="modal-close" onclick="closeModal('modal-rapid')">✕</button></div>
+    <div id="rapid-body"></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-export">
+  <div class="modal-box">
+    <div class="modal-head"><h3>Export Results</h3><button class="modal-close" onclick="closeModal('modal-export')">✕</button></div>
+    <p style="color:var(--mist);font-size:13.5px;margin-bottom:16px;">Export the currently selected view, observation and comparison values.</p>
+    <div style="display:flex;flex-direction:column;gap:10px;">
+      <button class="link-btn" onclick="exportCSV()">Download CSV <span>Tabular data →</span></button>
+      <button class="link-btn" onclick="exportJSON()">Download JSON <span>Metadata + provenance →</span></button>
+      <button class="link-btn" onclick="exportPNG()">Download PNG <span>Current 3D view →</span></button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-about">
+  <div class="modal-box">
+    <div class="modal-head"><h3>About OceanScope</h3><button class="modal-close" onclick="closeModal('modal-about')">✕</button></div>
+    <p style="color:var(--mist);font-size:13.5px;line-height:1.7;">OceanScope is a hackathon prototype for exploring ocean model output alongside real ARGO float and glider observations. It runs entirely on generated mock data structured to mirror NetCDF/CSV ocean datasets, so the same interface can later connect to live HYCOM output and the ARGO network.</p>
+    <p style="color:var(--mist);font-size:13.5px;line-height:1.7;margin-top:10px;">Pipeline: Raw Data → Ingestion → Parsing → Validation → Normalization → Time Filtering → API → Frontend → 3D Visualization → Comparison → Analysis.</p>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-argolist">
+  <div class="modal-box">
+    <div class="modal-head"><h3>Observations in view</h3><button class="modal-close" onclick="closeModal('modal-argolist')">✕</button></div>
+    <div id="argolist-body" style="display:flex;flex-direction:column;gap:8px;"></div>
+  </div>
+</div>
+
+<script src="project.js"></script>
+</body>
+</html>
