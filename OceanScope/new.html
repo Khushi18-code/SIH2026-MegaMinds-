@@ -1,0 +1,1225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Abyssal &middot; Argo Float Ocean Explorer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+    --abyss:#050d14;
+    --deep:#0a1a26;
+    --panel:rgba(160,200,215,0.055);
+    --panel-border:rgba(160,210,225,0.14);
+    --surface:#0e2433;
+    --foam:#eaf6f8;
+    --mist:#8aa8b4;
+    --tide:#22c1c9;
+    --tide-bright:#5be8e0;
+    --kelp:#4d8b7c;
+    --coral:#e8895b;
+    --alert:#e6b95c;
+    --danger:#e0616b;
+    --good:#5bd48a;
+    --radius:14px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;height:100%;background:var(--abyss);color:var(--foam);font-family:'Inter',sans-serif;overflow-x:hidden;}
+  ::selection{background:var(--tide);color:#05141a;}
+  h1,h2,h3,h4{font-family:'Space Grotesk',sans-serif;margin:0;letter-spacing:-0.01em;}
+  .mono{font-family:'IBM Plex Mono',monospace;}
+  button{font-family:inherit;cursor:pointer;}
+  a{color:inherit;}
+
+  /* ---------- layout shells ---------- */
+  .view{display:none;min-height:100vh;}
+  .view.active{display:block;}
+
+  /* ---------- LANDING ---------- */
+  #landing-canvas{position:fixed;inset:0;z-index:0;}
+  .landing-nav{position:relative;z-index:2;display:flex;justify-content:space-between;align-items:center;padding:26px 48px;}
+  .brand{display:flex;align-items:center;gap:10px;font-family:'Space Grotesk';font-weight:600;font-size:19px;letter-spacing:0.01em;}
+  .brand-mark{width:26px;height:26px;border-radius:50%;background:conic-gradient(from 210deg,var(--tide),var(--kelp),var(--deep));box-shadow:0 0 18px rgba(34,193,201,0.55);}
+  .landing-nav-links{display:flex;gap:34px;font-size:14.5px;color:var(--mist);}
+  .landing-nav-links span:hover{color:var(--foam);cursor:pointer;}
+
+  .hero{position:relative;z-index:2;max-width:760px;margin:9vh auto 0;padding:0 24px;text-align:center;}
+  .hero-eyebrow{color:var(--tide-bright);font-size:13.5px;font-family:'IBM Plex Mono';margin-bottom:18px;}
+  .hero h1{font-size:clamp(38px,6vw,64px);line-height:1.06;font-weight:600;}
+  .hero h1 em{font-style:normal;color:var(--tide-bright);}
+  .hero p{color:var(--mist);font-size:18px;line-height:1.6;max-width:560px;margin:22px auto 0;}
+  .hero-ctas{display:flex;gap:14px;justify-content:center;margin-top:34px;}
+  .btn{border:none;border-radius:9px;padding:13px 24px;font-size:15px;font-weight:600;transition:transform .15s ease, box-shadow .15s ease, background .15s ease;}
+  .btn:active{transform:translateY(1px);}
+  .btn-primary{background:linear-gradient(135deg,var(--tide),var(--kelp));color:#04141a;box-shadow:0 8px 24px rgba(34,193,201,0.3);}
+  .btn-primary:hover{box-shadow:0 10px 30px rgba(34,193,201,0.45);}
+  .btn-ghost{background:rgba(255,255,255,0.05);color:var(--foam);border:1px solid var(--panel-border);}
+  .btn-ghost:hover{background:rgba(255,255,255,0.09);}
+  .btn-sm{padding:9px 16px;font-size:13.5px;border-radius:8px;}
+
+  .feature-grid{position:relative;z-index:2;max-width:1040px;margin:11vh auto 0;padding:0 24px;display:grid;grid-template-columns:repeat(4,1fr);gap:16px;}
+  .feature-card{background:var(--panel);border:1px solid var(--panel-border);border-radius:var(--radius);padding:22px 18px;backdrop-filter:blur(14px);}
+  .feature-card .fi{width:34px;height:34px;border-radius:9px;background:rgba(34,193,201,0.14);display:flex;align-items:center;justify-content:center;margin-bottom:14px;color:var(--tide-bright);font-size:17px;}
+  .feature-card h4{font-size:15.5px;margin-bottom:6px;}
+  .feature-card p{font-size:13px;color:var(--mist);line-height:1.5;margin:0;}
+
+  .principle-strip{position:relative;z-index:2;max-width:720px;margin:9vh auto 0;padding:26px 24px 90px;text-align:center;border-top:1px solid var(--panel-border);}
+  .principle-strip p{color:var(--mist);font-size:15px;font-family:'IBM Plex Mono';}
+  .principle-strip strong{color:var(--foam);}
+
+  /* ---------- APP SHELL ---------- */
+  .topbar{height:56px;display:flex;align-items:center;justify-content:space-between;padding:0 20px;border-bottom:1px solid var(--panel-border);background:rgba(6,16,22,0.92);position:sticky;top:0;z-index:50;backdrop-filter:blur(10px);}
+  .topbar-left{display:flex;align-items:center;gap:30px;}
+  .topbar-nav{display:flex;gap:4px;}
+  .topbar-nav button{background:none;border:none;color:var(--mist);font-size:14px;padding:8px 14px;border-radius:7px;}
+  .topbar-nav button.active{color:var(--foam);background:rgba(255,255,255,0.06);}
+  .topbar-nav button:hover{color:var(--foam);}
+  .topbar-right{display:flex;align-items:center;gap:16px;}
+  .status-pill{display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--mist);font-family:'IBM Plex Mono';background:rgba(255,255,255,0.04);border:1px solid var(--panel-border);padding:6px 12px;border-radius:20px;}
+  .status-dot{width:7px;height:7px;border-radius:50%;background:var(--good);box-shadow:0 0 6px var(--good);}
+  .avatar{width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,var(--tide),var(--kelp));display:flex;align-items:center;justify-content:center;font-size:12.5px;font-weight:700;color:#04141a;}
+
+  .explore-grid{display:grid;grid-template-columns:270px 1fr 320px;height:calc(100vh - 56px);}
+  @media (max-width:1080px){.explore-grid{grid-template-columns:240px 1fr;}#argo-panel{position:fixed;right:0;top:56px;bottom:0;width:320px;z-index:40;box-shadow:-12px 0 30px rgba(0,0,0,0.4);transform:translateX(100%);transition:transform .25s ease;}#argo-panel.open{transform:translateX(0);}}
+  @media (max-width:760px){.explore-grid{grid-template-columns:1fr;grid-template-rows:auto 1fr;}#control-panel{position:fixed;left:0;top:56px;bottom:0;width:270px;z-index:41;transform:translateX(-100%);transition:transform .25s ease;box-shadow:12px 0 30px rgba(0,0,0,.4);}#control-panel.open{transform:translateX(0);}#mobile-panel-toggle{display:flex !important;}}
+
+  #control-panel{border-right:1px solid var(--panel-border);overflow-y:auto;padding:18px 16px 40px;background:rgba(8,20,28,0.6);}
+  .panel-section{margin-bottom:22px;}
+  .panel-label{font-size:11px;letter-spacing:0.06em;color:var(--mist);margin-bottom:10px;font-family:'IBM Plex Mono';}
+  .field{margin-bottom:12px;}
+  .field label{display:block;font-size:12.5px;color:var(--mist);margin-bottom:5px;}
+  select, .fake-select{width:100%;background:rgba(255,255,255,0.045);border:1px solid var(--panel-border);color:var(--foam);padding:9px 10px;border-radius:8px;font-size:13.5px;}
+  select:focus{outline:2px solid var(--tide);outline-offset:1px;}
+  .chip-row{display:flex;flex-wrap:wrap;gap:6px;}
+  .chip{padding:6px 11px;border-radius:20px;font-size:12px;background:rgba(255,255,255,0.045);border:1px solid var(--panel-border);color:var(--mist);}
+  .chip.active{background:rgba(34,193,201,0.18);border-color:var(--tide);color:var(--tide-bright);}
+
+  .slider-wrap{margin-top:8px;}
+  input[type=range]{width:100%;accent-color:var(--tide);}
+  .slider-scale{display:flex;justify-content:space-between;font-size:10.5px;color:var(--mist);font-family:'IBM Plex Mono';margin-top:2px;}
+  .readout{display:flex;justify-content:space-between;align-items:baseline;margin-top:6px;}
+  .readout .val{font-family:'IBM Plex Mono';font-size:14px;color:var(--tide-bright);}
+  .status-tag{font-size:10.5px;padding:2px 8px;border-radius:12px;font-family:'IBM Plex Mono';}
+  .status-exact{background:rgba(91,212,138,0.15);color:var(--good);}
+  .status-interp{background:rgba(230,185,92,0.15);color:var(--alert);}
+
+  .transport-row{display:flex;gap:6px;margin-top:8px;}
+  .transport-row button{flex:1;background:rgba(255,255,255,0.045);border:1px solid var(--panel-border);color:var(--foam);padding:8px;border-radius:8px;font-size:13px;}
+  .transport-row button:hover{background:rgba(255,255,255,0.09);}
+  .transport-row button.play{background:rgba(34,193,201,0.18);border-color:var(--tide);color:var(--tide-bright);}
+
+  .viz-toggle-row{display:flex;flex-direction:column;gap:8px;}
+  .toggle-row{display:flex;align-items:center;justify-content:space-between;font-size:13px;}
+  .switch{width:34px;height:19px;border-radius:20px;background:rgba(255,255,255,0.12);position:relative;cursor:pointer;flex-shrink:0;transition:background .15s;}
+  .switch.on{background:var(--tide);}
+  .switch::after{content:'';position:absolute;top:2px;left:2px;width:15px;height:15px;border-radius:50%;background:#fff;transition:left .15s;}
+  .switch.on::after{left:17px;}
+
+  /* --- main viewer --- */
+  #viewer-wrap{position:relative;background:radial-gradient(circle at 30% 20%,#0b2836,#040d13 75%);overflow:hidden;}
+  #viewer-canvas{width:100%;height:100%;display:block;}
+  .viewer-topbar{position:absolute;top:14px;left:16px;right:16px;display:flex;justify-content:space-between;align-items:flex-start;pointer-events:none;z-index:5;}
+  .viewer-badge{pointer-events:auto;background:rgba(6,16,22,0.72);border:1px solid var(--panel-border);backdrop-filter:blur(8px);border-radius:10px;padding:10px 14px;font-size:12.5px;}
+  .viewer-badge .k{color:var(--mist);font-size:10.5px;font-family:'IBM Plex Mono';margin-bottom:2px;}
+  .viewer-badge .v{font-family:'IBM Plex Mono';font-size:14px;color:var(--foam);}
+  .view-mode-row{display:flex;gap:6px;pointer-events:auto;}
+  .view-mode-row button{background:rgba(6,16,22,0.72);border:1px solid var(--panel-border);color:var(--mist);font-size:12px;padding:8px 12px;border-radius:8px;backdrop-filter:blur(8px);}
+  .view-mode-row button.active{color:var(--tide-bright);border-color:var(--tide);background:rgba(34,193,201,0.14);}
+  .legend{position:absolute;bottom:16px;left:16px;background:rgba(6,16,22,0.75);border:1px solid var(--panel-border);border-radius:10px;padding:10px 14px;backdrop-filter:blur(8px);z-index:5;}
+  .legend-bar{width:180px;height:8px;border-radius:4px;margin:6px 0 4px;}
+  .legend-labels{display:flex;justify-content:space-between;font-size:10.5px;color:var(--mist);font-family:'IBM Plex Mono';}
+  .viewer-actions{position:absolute;bottom:16px;right:16px;display:flex;gap:8px;z-index:5;}
+  .icon-btn{width:36px;height:36px;border-radius:9px;background:rgba(6,16,22,0.75);border:1px solid var(--panel-border);color:var(--foam);display:flex;align-items:center;justify-content:center;backdrop-filter:blur(8px);font-size:15px;}
+  .icon-btn:hover{background:rgba(255,255,255,0.08);}
+  .rapid-btn{position:absolute;top:14px;left:50%;transform:translateX(-50%);z-index:5;background:linear-gradient(135deg,var(--tide),var(--kelp));color:#04141a;border:none;padding:10px 18px;border-radius:20px;font-size:13.5px;font-weight:700;box-shadow:0 6px 20px rgba(34,193,201,0.35);display:flex;align-items:center;gap:7px;}
+  .tooltip-card{position:absolute;pointer-events:none;background:rgba(6,16,22,0.94);border:1px solid var(--tide);border-radius:10px;padding:10px 13px;font-size:12px;z-index:8;max-width:210px;box-shadow:0 8px 22px rgba(0,0,0,0.4);}
+  .tooltip-card .t-title{font-family:'IBM Plex Mono';color:var(--tide-bright);font-size:12px;margin-bottom:6px;font-weight:600;}
+  .tooltip-card .t-row{display:flex;justify-content:space-between;color:var(--mist);margin-top:2px;}
+  .tooltip-card .t-row b{color:var(--foam);font-weight:500;}
+
+  #mobile-panel-toggle{display:none;position:absolute;top:14px;left:16px;z-index:6;}
+
+  /* --- argo panel --- */
+  #argo-panel{border-left:1px solid var(--panel-border);background:rgba(8,20,28,0.75);overflow-y:auto;padding:18px 16px 40px;}
+  .argo-empty{color:var(--mist);font-size:13.5px;padding:40px 10px;text-align:center;line-height:1.7;}
+  .argo-empty .ico{font-size:30px;margin-bottom:10px;}
+  .tab-row{display:flex;gap:4px;margin-bottom:16px;border-bottom:1px solid var(--panel-border);}
+  .tab-row button{background:none;border:none;color:var(--mist);font-size:13px;padding:9px 4px;margin-right:16px;border-bottom:2px solid transparent;}
+  .tab-row button.active{color:var(--tide-bright);border-color:var(--tide);}
+  .info-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;}
+  .info-cell{background:rgba(255,255,255,0.035);border:1px solid var(--panel-border);border-radius:8px;padding:9px 10px;}
+  .info-cell .k{font-size:10px;color:var(--mist);font-family:'IBM Plex Mono';margin-bottom:3px;}
+  .info-cell .v{font-size:13.5px;}
+  .var-pill-row{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap;}
+  .chart-box{background:rgba(255,255,255,0.03);border:1px solid var(--panel-border);border-radius:10px;padding:12px;margin-bottom:14px;height:220px;}
+  .link-row{display:flex;flex-direction:column;gap:8px;margin-top:14px;}
+  .link-btn{background:rgba(255,255,255,0.045);border:1px solid var(--panel-border);color:var(--foam);text-align:left;padding:10px 12px;border-radius:8px;font-size:13px;display:flex;justify-content:space-between;align-items:center;}
+  .link-btn:hover{background:rgba(255,255,255,0.08);}
+
+  /* --- compare view --- */
+  .compare-wrap{max-width:1100px;margin:0 auto;padding:28px 24px 60px;}
+  .compare-head{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:22px;flex-wrap:wrap;gap:14px;}
+  .compare-selectors{display:flex;gap:12px;flex-wrap:wrap;}
+  .compare-selectors .field{margin-bottom:0;min-width:150px;}
+  .eligibility-card{background:var(--panel);border:1px solid var(--panel-border);border-radius:var(--radius);padding:20px 22px;margin-bottom:22px;}
+  .elig-badge{display:inline-flex;align-items:center;gap:8px;padding:7px 14px;border-radius:20px;font-size:13px;font-weight:600;margin-bottom:14px;}
+  .elig-eligible{background:rgba(91,212,138,0.15);color:var(--good);}
+  .elig-partial{background:rgba(230,185,92,0.15);color:var(--alert);}
+  .elig-none{background:rgba(224,97,107,0.15);color:var(--danger);}
+  .check-list{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
+  .check-item{font-size:13px;display:flex;gap:8px;align-items:flex-start;color:var(--mist);}
+  .check-item.ok b{color:var(--good);}
+  .check-item.warn b{color:var(--alert);}
+  .check-item b{margin-right:2px;}
+  .compare-cols{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:22px;}
+  .compare-col{background:var(--panel);border:1px solid var(--panel-border);border-radius:var(--radius);padding:18px;text-align:center;}
+  .compare-col .cl{font-size:11px;color:var(--mist);font-family:'IBM Plex Mono';margin-bottom:10px;}
+  .compare-col .cv{font-family:'Space Grotesk';font-size:32px;font-weight:600;}
+  .compare-col.diff-pos .cv{color:var(--coral);}
+  .compare-col.diff-neg .cv{color:var(--tide-bright);}
+  .compare-col .swatch{width:100%;height:70px;border-radius:8px;margin-top:12px;}
+  .insight-strip{background:linear-gradient(135deg,rgba(34,193,201,0.1),rgba(77,139,124,0.06));border:1px solid var(--panel-border);border-radius:var(--radius);padding:16px 20px;font-size:13.5px;color:var(--mist);display:flex;align-items:center;gap:12px;}
+
+  /* --- analysis view --- */
+  .analysis-wrap{max-width:1180px;margin:0 auto;padding:28px 24px 60px;}
+  .analysis-controls{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:22px;background:var(--panel);border:1px solid var(--panel-border);border-radius:var(--radius);padding:14px 16px;}
+  .analysis-controls .field{margin-bottom:0;min-width:140px;}
+  .chart-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;}
+  .chart-card{background:var(--panel);border:1px solid var(--panel-border);border-radius:var(--radius);padding:16px 18px;}
+  .chart-card h4{font-size:14px;margin-bottom:12px;color:var(--foam);}
+  .chart-card .cc-inner{height:230px;}
+  @media (max-width:820px){.chart-grid{grid-template-columns:1fr;}}
+
+  /* --- quality panel section --- */
+  .quality-list{display:flex;flex-direction:column;gap:8px;margin:14px 0;}
+  .quality-row{display:flex;justify-content:space-between;align-items:center;background:rgba(255,255,255,0.035);border:1px solid var(--panel-border);border-radius:8px;padding:9px 12px;font-size:13px;}
+  .qbadge{font-size:11px;padding:3px 9px;border-radius:12px;font-weight:600;}
+  .qgood{background:rgba(91,212,138,0.15);color:var(--good);}
+  .qwarn{background:rgba(230,185,92,0.15);color:var(--alert);}
+  .qbad{background:rgba(224,97,107,0.15);color:var(--danger);}
+  .qscore{display:flex;align-items:center;gap:16px;margin-top:16px;}
+  .qscore-ring{width:64px;height:64px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Space Grotesk';font-weight:700;font-size:17px;flex-shrink:0;}
+
+  /* --- modals --- */
+  .modal-overlay{position:fixed;inset:0;background:rgba(2,8,12,0.72);backdrop-filter:blur(4px);z-index:100;display:none;align-items:center;justify-content:center;padding:20px;}
+  .modal-overlay.open{display:flex;}
+  .modal-box{background:#0c202c;border:1px solid var(--panel-border);border-radius:16px;max-width:520px;width:100%;max-height:85vh;overflow-y:auto;padding:26px 26px 22px;box-shadow:0 30px 70px rgba(0,0,0,0.5);}
+  .modal-box.wide{max-width:640px;}
+  .modal-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;}
+  .modal-close{background:none;border:none;color:var(--mist);font-size:20px;line-height:1;padding:4px;}
+  .modal-close:hover{color:var(--foam);}
+  .prov-row{display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid rgba(255,255,255,0.06);font-size:13.5px;}
+  .prov-row .pk{color:var(--mist);}
+  .prov-row .pv{font-family:'IBM Plex Mono';}
+  .anomaly-flag{display:flex;gap:10px;align-items:flex-start;background:rgba(230,185,92,0.1);border:1px solid rgba(230,185,92,0.35);border-radius:10px;padding:14px;margin-top:14px;font-size:13px;color:var(--alert);}
+  .rapid-block{margin-bottom:16px;}
+  .rapid-block .rl{font-size:11px;color:var(--mist);font-family:'IBM Plex Mono';margin-bottom:6px;}
+  .rapid-obs{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:6px;}
+  .rapid-obs li{font-size:13.5px;padding-left:14px;position:relative;}
+  .rapid-obs li::before{content:'•';position:absolute;left:0;color:var(--tide-bright);}
+  .rapid-conclusion{background:rgba(34,193,201,0.08);border-left:3px solid var(--tide);padding:12px 14px;border-radius:0 8px 8px 0;font-size:13.5px;margin-top:14px;}
+  .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#0c202c;border:1px solid var(--good);color:var(--good);padding:12px 20px;border-radius:10px;font-size:13.5px;z-index:200;display:none;box-shadow:0 10px 30px rgba(0,0,0,0.4);}
+  .toast.show{display:block;animation:toastIn .2s ease;}
+  @keyframes toastIn{from{opacity:0;transform:translate(-50%,8px)}to{opacity:1;transform:translate(-50%,0)}}
+
+  .scroll-thin::-webkit-scrollbar{width:7px;}
+  .scroll-thin::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.12);border-radius:10px;}
+
+  /* =====================================================================
+     ADDITIVE RULES — login/role screen, subview switching, 3D viewer chrome
+     Nothing above this line was changed.
+     ===================================================================== */
+
+  /* top-level view is already handled by .view/.view.active — subviews
+     inside the app shell (explore / compare / analysis) get their own
+     lightweight switcher so they don't collide with that rule */
+  .subview{display:none;}
+  .subview.active{display:block;}
+  #subview-explore.active{display:grid;}
+
+  /* role-based visibility: elements only relevant to one role */
+  body.role-education [data-role="researcher"]{display:none !important;}
+  body:not(.role-education) [data-role="education-only"]{display:none !important;}
+  body.role-researcher [data-role="education-only"]{display:none !important;}
+
+  /* login screen */
+  #view-login{display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 50% 20%,#0d2734,var(--abyss) 70%);padding:24px;}
+  .login-wrap{width:100%;max-width:620px;}
+  .login-card{background:var(--panel);border:1px solid var(--panel-border);border-radius:var(--radius);padding:34px 30px;backdrop-filter:blur(14px);text-align:center;}
+  .login-card h2{font-size:24px;margin-bottom:8px;}
+  .login-card > p{color:var(--mist);font-size:14px;margin:0 0 26px;}
+  .role-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:22px;}
+  @media (max-width:520px){.role-grid{grid-template-columns:1fr;}}
+  .role-card{text-align:left;background:rgba(255,255,255,0.035);border:1px solid var(--panel-border);border-radius:12px;padding:20px 18px;color:var(--foam);transition:border-color .15s ease, background .15s ease, transform .15s ease;}
+  .role-card:hover{background:rgba(255,255,255,0.07);transform:translateY(-2px);}
+  .role-card.selected{border-color:var(--tide);background:rgba(34,193,201,0.12);}
+  .role-card .r-icon{width:36px;height:36px;border-radius:10px;background:rgba(34,193,201,0.16);display:flex;align-items:center;justify-content:center;font-size:18px;margin-bottom:12px;color:var(--tide-bright);}
+  .role-card h3{font-size:15.5px;margin-bottom:6px;}
+  .role-card p{font-size:12.5px;color:var(--mist);line-height:1.5;margin:0;}
+  .role-tag{display:inline-block;margin-top:10px;font-size:10.5px;font-family:'IBM Plex Mono';color:var(--tide-bright);background:rgba(34,193,201,0.12);padding:3px 8px;border-radius:10px;}
+
+  .edu-hint{position:absolute;top:60px;left:16px;right:16px;z-index:5;background:rgba(6,16,22,0.72);border:1px solid var(--panel-border);border-radius:10px;padding:10px 14px;font-size:12.5px;color:var(--mist);backdrop-filter:blur(8px);pointer-events:none;max-width:340px;}
+  .edu-hint b{color:var(--tide-bright);}
+
+  .depth-axis-layer{position:absolute;inset:0;pointer-events:none;z-index:4;}
+  .depth-axis-layer .tick{position:absolute;left:0;transform:translateY(-50%);display:flex;align-items:center;gap:6px;font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--mist);}
+  .depth-axis-layer .tick .bar{width:12px;height:1px;background:var(--panel-border);}
+
+  .var-chip{background:none;}
+
+  canvas.mini-chart{width:100%;height:100%;display:block;}
+</style>
+</head>
+<body>
+
+<!-- ===================== LANDING ===================== -->
+<div class="view active" id="view-landing">
+  <canvas id="landing-canvas"></canvas>
+  <nav class="landing-nav">
+    <div class="brand"><span class="brand-mark"></span>Abyssal</div>
+    <div class="landing-nav-links">
+      <span data-scroll="feature-grid">Product</span>
+      <span data-scroll="principle-strip">Data</span>
+      <span data-scroll="landing-nav">About</span>
+    </div>
+    <button class="btn btn-ghost btn-sm" id="btn-signin-nav">Sign in</button>
+  </nav>
+
+  <div class="hero">
+    <div class="hero-eyebrow">GLOBAL ARGO FLOAT NETWORK</div>
+    <h1>See the ocean's <em>hidden layers</em></h1>
+    <p>Explore live temperature, salinity and oxygen data from autonomous ocean floats, rendered as an interactive 3D cross-section.</p>
+    <div class="hero-ctas">
+      <button class="btn btn-primary" id="btn-launch">Launch Explorer</button>
+      <button class="btn btn-ghost" id="btn-learn">See how it works</button>
+    </div>
+  </div>
+
+  <div class="feature-grid" id="feature-grid">
+    <div class="feature-card"><div class="fi">◐</div><h4>3D cross-sections</h4><p>Slice through the water column and watch floats descend and ascend in real depth space.</p></div>
+    <div class="feature-card"><div class="fi">≋</div><h4>Live current fields</h4><p>Depth-banded flow arrows show circulation at the surface, thermocline and abyss.</p></div>
+    <div class="feature-card"><div class="fi">⧉</div><h4>Float comparison</h4><p>Line up two floats side by side and check data-comparability before you cite them.</p></div>
+    <div class="feature-card"><div class="fi">✓</div><h4>Quality flags</h4><p>Every reading carries its QC status, so you know what's measured and what's interpolated.</p></div>
+  </div>
+
+  <div class="principle-strip"><p>Built on public <strong>Argo GDAC</strong> data, updated daily.</p></div>
+</div>
+
+<!-- ===================== LOGIN / ROLE SELECT ===================== -->
+<div class="view" id="view-login">
+  <div class="login-wrap">
+    <div class="login-card">
+      <h2>How are you using Abyssal?</h2>
+      <p>This sets up your workspace. You can switch later from the top bar.</p>
+      <div class="role-grid">
+        <button class="role-card" data-role="researcher" id="role-researcher">
+          <div class="r-icon">⚗</div>
+          <h3>Researcher / Analyst</h3>
+          <p>Full analysis tools: QC flags, float comparison, trend charts and raw data links.</p>
+          <span class="role-tag">Analytics mode</span>
+        </button>
+        <button class="role-card" data-role="education" id="role-education">
+          <div class="r-icon">🎓</div>
+          <h3>Education</h3>
+          <p>Guided exploration with plain-language explanations of what each layer means.</p>
+          <span class="role-tag">Learning mode</span>
+        </button>
+      </div>
+      <button class="btn btn-ghost btn-sm" id="login-back">Back to home</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== APP SHELL ===================== -->
+<div class="view" id="view-app">
+
+  <div class="topbar">
+    <div class="topbar-left">
+      <div class="brand"><span class="brand-mark"></span>Abyssal</div>
+      <div class="topbar-nav">
+        <button class="active" data-target="explore">Explore</button>
+        <button data-target="compare">Compare</button>
+        <button data-target="analysis" data-role="researcher">Analysis</button>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <div class="status-pill"><span class="status-dot"></span><span id="role-status-text">Live data &middot; synced</span></div>
+      <div class="avatar" id="avatar-initial">R</div>
+    </div>
+  </div>
+
+  <!-- ---- EXPLORE ---- -->
+  <div class="subview explore-grid active" id="subview-explore">
+
+    <div id="control-panel" class="scroll-thin">
+      <div class="panel-section">
+        <div class="panel-label">REGION</div>
+        <div class="field">
+          <label>Ocean basin</label>
+          <select id="select-basin">
+            <option>Bay of Bengal</option>
+            <option>Arabian Sea</option>
+            <option>Equatorial Indian Ocean</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="panel-section">
+        <div class="panel-label">VARIABLE</div>
+        <div class="chip-row" id="variable-chips">
+          <button class="chip active var-chip" data-var="0">Temperature</button>
+          <button class="chip var-chip" data-var="1">Salinity</button>
+          <button class="chip var-chip" data-var="2">Oxygen</button>
+        </div>
+      </div>
+
+      <div class="panel-section">
+        <div class="panel-label">DEPTH</div>
+        <div class="slider-wrap">
+          <input type="range" id="depth-slider" min="0" max="1000" step="10" value="340">
+          <div class="slider-scale"><span>0 m</span><span>1000 m</span></div>
+        </div>
+        <div class="readout">
+          <span class="val" id="depth-readout">340 m</span>
+          <span class="status-tag status-interp" id="depth-status">Interpolated</span>
+        </div>
+      </div>
+
+      <div class="panel-section">
+        <div class="panel-label">PLAYBACK</div>
+        <div class="transport-row">
+          <button id="btn-step-back" title="Step back">&#9198;</button>
+          <button id="btn-toggle-play" class="play" title="Play / pause">&#9208;</button>
+          <button id="btn-step-fwd" title="Step forward">&#9197;</button>
+        </div>
+      </div>
+
+      <div class="panel-section">
+        <div class="panel-label">LAYERS</div>
+        <div class="viz-toggle-row">
+          <div class="toggle-row"><span>Current arrows</span><div class="switch on" data-toggle="currents"></div></div>
+          <div class="toggle-row"><span>Depth grid</span><div class="switch on" data-toggle="grid"></div></div>
+          <div class="toggle-row" data-role="researcher"><span>Show QC-flagged only</span><div class="switch" data-toggle="qcOnly"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <div id="viewer-wrap">
+      <button id="mobile-panel-toggle" class="icon-btn">&#9776;</button>
+
+      <div class="viewer-topbar">
+        <div class="viewer-badge">
+          <div class="k">BASIN</div>
+          <div class="v" id="badge-basin">Bay of Bengal</div>
+        </div>
+        <div class="view-mode-row">
+          <button class="active" data-viewmode="cross">3D Cross-Section</button>
+          <button data-viewmode="top">Top-Down</button>
+        </div>
+      </div>
+
+      <div class="edu-hint" data-role="education-only">
+        Each colored band is a <b>temperature layer</b>. Dots are real ocean robots (Argo floats) drifting up and down to measure the water.
+      </div>
+
+      <button class="rapid-btn" id="btn-rapid">&#9889; Rapid Insights</button>
+
+      <canvas id="viewer-canvas"></canvas>
+      <div class="depth-axis-layer" id="depth-axis-layer"></div>
+      <div class="tooltip-card" id="float-tooltip" style="display:none;"></div>
+
+      <div class="legend">
+        <div class="k mono" style="color:var(--mist);font-size:11px;" id="legend-title">Temperature</div>
+        <div class="legend-bar" id="legend-bar" style="background:linear-gradient(90deg,#e8895b,#e6b95c,#4d8b7c,#22c1c9,#0a1a26);"></div>
+        <div class="legend-labels"><span id="legend-min">Warm</span><span id="legend-max">Cold</span></div>
+      </div>
+
+      <div class="viewer-actions">
+        <button class="icon-btn" id="btn-reset-cam" title="Reset camera">&#8635;</button>
+        <button class="icon-btn" id="btn-argo-toggle" title="Float details">&#8505;</button>
+        <button class="icon-btn" id="btn-fullscreen" title="Fullscreen">&#9974;</button>
+      </div>
+    </div>
+
+    <div id="argo-panel" class="scroll-thin">
+      <div id="argo-empty-state" class="argo-empty">
+        <div class="ico">◎</div>
+        Select a float in the 3D view<br>to see its profile and metadata.
+      </div>
+
+      <div id="argo-detail" style="display:none;">
+        <div class="tab-row">
+          <button class="active" data-argotab="profile">Profile</button>
+          <button data-argotab="trajectory">Trajectory</button>
+          <button data-argotab="metadata">Metadata</button>
+        </div>
+
+        <div class="argo-tab-content" id="argotab-profile">
+          <div class="info-grid">
+            <div class="info-cell"><div class="k">FLOAT ID</div><div class="v" id="d-id">&mdash;</div></div>
+            <div class="info-cell"><div class="k">STATUS</div><div class="v" id="d-status">&mdash;</div></div>
+            <div class="info-cell"><div class="k">CYCLE</div><div class="v" id="d-cycle">&mdash;</div></div>
+            <div class="info-cell"><div class="k">PARK DEPTH</div><div class="v" id="d-park">&mdash;</div></div>
+          </div>
+          <div class="var-pill-row">
+            <span class="chip active">Temperature</span>
+            <span class="chip">Salinity</span>
+          </div>
+          <div class="chart-box"><canvas class="mini-chart" id="profile-chart"></canvas></div>
+
+          <div class="panel-section" data-role="researcher">
+            <div class="panel-label">DATA QUALITY</div>
+            <div class="quality-list">
+              <div class="quality-row"><span>Pressure sensor</span><span class="qbadge qgood">Good</span></div>
+              <div class="quality-row"><span>Temperature sensor</span><span class="qbadge qgood">Good</span></div>
+              <div class="quality-row"><span>Salinity sensor</span><span class="qbadge qwarn" id="qc-salinity">Probable</span></div>
+            </div>
+          </div>
+
+          <div class="link-row">
+            <button class="link-btn" id="btn-provenance">View data provenance <span>&rsaquo;</span></button>
+            <button class="link-btn" data-role="researcher">Download NetCDF <span>&rsaquo;</span></button>
+            <button class="link-btn" id="btn-goto-compare">Compare with another float <span>&rsaquo;</span></button>
+          </div>
+        </div>
+
+        <div class="argo-tab-content" id="argotab-trajectory" style="display:none;">
+          <div class="chart-box"><canvas class="mini-chart" id="trajectory-chart"></canvas></div>
+          <p style="font-size:12.5px;color:var(--mist);">Lat/lon drift over the float's last 12 cycles (illustrative).</p>
+        </div>
+
+        <div class="argo-tab-content" id="argotab-metadata" style="display:none;">
+          <div class="info-grid">
+            <div class="info-cell"><div class="k">WMO ID</div><div class="v" id="m-wmo">&mdash;</div></div>
+            <div class="info-cell"><div class="k">PLATFORM</div><div class="v">APEX / Iridium</div></div>
+            <div class="info-cell"><div class="k">DEPLOYED</div><div class="v" id="m-deployed">&mdash;</div></div>
+            <div class="info-cell"><div class="k">LAST TX</div><div class="v" id="m-lasttx">&mdash;</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ---- COMPARE ---- -->
+  <div class="subview compare-wrap" id="subview-compare">
+    <div class="compare-head">
+      <h2>Compare floats</h2>
+      <div class="compare-selectors">
+        <div class="field"><label>Float A</label><select id="compare-a"></select></div>
+        <div class="field"><label>Float B</label><select id="compare-b"></select></div>
+      </div>
+    </div>
+
+    <div class="eligibility-card">
+      <div class="elig-badge elig-eligible" id="elig-badge">&#10003; Eligible for comparison</div>
+      <div class="check-list">
+        <div class="check-item ok"><b>&#10003;</b> Same basin</div>
+        <div class="check-item ok"><b>&#10003;</b> Overlapping depth range</div>
+        <div class="check-item warn" id="check-time"><b>!</b> 6-day cycle offset</div>
+      </div>
+    </div>
+
+    <div class="compare-cols">
+      <div class="compare-col"><div class="cl">FLOAT A &middot; SURFACE TEMP</div><div class="cv" id="cmp-a-val">27.4&deg;</div><div class="swatch" style="background:linear-gradient(135deg,#e8895b,#e6b95c);"></div></div>
+      <div class="compare-col diff-pos"><div class="cl">DIFFERENCE</div><div class="cv" id="cmp-diff-val">+0.6&deg;</div><div class="swatch" style="background:rgba(232,137,91,0.25);"></div></div>
+      <div class="compare-col"><div class="cl">FLOAT B &middot; SURFACE TEMP</div><div class="cv" id="cmp-b-val">26.8&deg;</div><div class="swatch" style="background:linear-gradient(135deg,#22c1c9,#4d8b7c);"></div></div>
+    </div>
+
+    <div class="insight-strip">&#9889; Float A reads warmer at the surface, consistent with its position closer to the coast.</div>
+  </div>
+
+  <!-- ---- ANALYSIS (researcher only) ---- -->
+  <div class="subview analysis-wrap" id="subview-analysis" data-role="researcher">
+    <div class="analysis-controls">
+      <div class="field"><label>Variable</label><select id="analysis-var"><option>Temperature</option><option>Salinity</option><option>Oxygen</option></select></div>
+      <div class="field"><label>Basin</label><select><option>Bay of Bengal</option><option>Arabian Sea</option></select></div>
+      <div class="field"><label>Time range</label><select><option>Last 30 days</option><option>Last 90 days</option><option>Last year</option></select></div>
+    </div>
+    <div class="chart-grid">
+      <div class="chart-card"><h4>Depth-averaged trend</h4><div class="cc-inner"><canvas class="mini-chart" id="analysis-chart-1"></canvas></div></div>
+      <div class="chart-card"><h4>Anomaly vs. climatology</h4><div class="cc-inner"><canvas class="mini-chart" id="analysis-chart-2"></canvas></div></div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ===================== MODALS ===================== -->
+<div class="modal-overlay" id="modal-provenance">
+  <div class="modal-box">
+    <div class="modal-head"><h3>Data provenance</h3><button class="modal-close" data-close="modal-provenance">&times;</button></div>
+    <div class="prov-row"><span class="pk">Source</span><span class="pv">Argo GDAC (ifremer mirror)</span></div>
+    <div class="prov-row"><span class="pk">Platform</span><span class="pv" id="prov-platform">APEX float</span></div>
+    <div class="prov-row"><span class="pk">WMO ID</span><span class="pv" id="prov-wmo">&mdash;</span></div>
+    <div class="prov-row"><span class="pk">QC flag</span><span class="pv">1 &middot; Good</span></div>
+    <div class="prov-row"><span class="pk">Last updated</span><span class="pv">10 Aug 2026, 06:12 UTC</span></div>
+    <div class="anomaly-flag">&#9888; One salinity reading near 480m is flagged probable — shown greyed in the profile chart.</div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-rapid">
+  <div class="modal-box wide">
+    <div class="modal-head"><h3>Rapid insights</h3><button class="modal-close" data-close="modal-rapid">&times;</button></div>
+    <div class="rapid-block">
+      <div class="rl">CURRENT VIEW &middot; BAY OF BENGAL &middot; TEMPERATURE</div>
+      <ul class="rapid-obs">
+        <li>Surface layer holds above 27&deg;C down to roughly 40m.</li>
+        <li>A sharp thermocline sits between 80&ndash;150m.</li>
+        <li>Three active floats are currently profiling this basin.</li>
+      </ul>
+    </div>
+    <div class="rapid-conclusion">This is a typical pre-monsoon thermal structure for the region &mdash; a warm, well-mixed surface layer sitting over a compressed thermocline.</div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdnjs.cloudflare.com/ajax/libs/three.js/0.160.0/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+  }
+}
+</script>
+
+<script type="module">
+import * as THREE from "three";
+import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+
+/* ===================================================================
+   STATE
+   =================================================================== */
+const state = {
+  role: null,            // 'researcher' | 'education'
+  variable: 0,            // 0 temp, 1 salinity, 2 oxygen
+  playing: true,
+  tNorm: 0.3,
+  selectedFloatIdx: null,
+  showCurrents: true,
+  showGrid: true,
+};
+
+/* ===================================================================
+   VIEW SWITCHING (top-level: landing / login / app)
+   =================================================================== */
+function showView(id){
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+function showSubview(id){
+  document.querySelectorAll('.subview').forEach(v=>v.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  document.querySelectorAll('.topbar-nav button').forEach(b=>b.classList.remove('active'));
+  const map = { 'subview-explore':'explore', 'subview-compare':'compare', 'subview-analysis':'analysis' };
+  const target = map[id];
+  const btn = document.querySelector(`.topbar-nav button[data-target="${target}"]`);
+  if (btn) btn.classList.add('active');
+  if (id === 'subview-explore') onViewerResize();
+}
+
+document.getElementById('btn-launch').addEventListener('click', ()=>showView('view-login'));
+document.getElementById('btn-signin-nav').addEventListener('click', ()=>showView('view-login'));
+document.getElementById('btn-learn').addEventListener('click', ()=>{
+  document.getElementById('feature-grid').scrollIntoView({behavior:'smooth'});
+});
+document.getElementById('login-back').addEventListener('click', ()=>showView('view-landing'));
+
+document.querySelectorAll('.role-card').forEach(card=>{
+  card.addEventListener('click', ()=>{
+    const role = card.dataset.role;
+    state.role = role;
+    document.body.classList.remove('role-researcher','role-education');
+    document.body.classList.add(role === 'researcher' ? 'role-researcher' : 'role-education');
+    document.getElementById('avatar-initial').textContent = role === 'researcher' ? 'R' : 'E';
+    document.getElementById('role-status-text').textContent = role === 'researcher'
+      ? 'Live data \u00b7 analytics session'
+      : 'Live data \u00b7 guided session';
+    showView('view-app');
+    showSubview('subview-explore');
+    showToast(role === 'researcher' ? 'Signed in as Researcher' : 'Signed in as Education user');
+  });
+});
+
+document.querySelectorAll('.topbar-nav button').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    const target = btn.dataset.target;
+    showSubview('subview-' + target);
+  });
+});
+
+/* ===================================================================
+   TOAST + MODALS
+   =================================================================== */
+let toastTimer = null;
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>t.classList.remove('show'), 2200);
+}
+function openModal(id){ document.getElementById(id).classList.add('open'); }
+function closeModal(id){ document.getElementById(id).classList.remove('open'); }
+document.querySelectorAll('.modal-close').forEach(b=>b.addEventListener('click', ()=>closeModal(b.dataset.close)));
+document.querySelectorAll('.modal-overlay').forEach(ov=>{
+  ov.addEventListener('click', (e)=>{ if (e.target === ov) ov.classList.remove('open'); });
+});
+document.getElementById('btn-rapid').addEventListener('click', ()=>openModal('modal-rapid'));
+document.getElementById('btn-provenance').addEventListener('click', ()=>openModal('modal-provenance'));
+
+/* ===================================================================
+   MOBILE PANEL TOGGLES
+   =================================================================== */
+document.getElementById('mobile-panel-toggle').addEventListener('click', ()=>{
+  document.getElementById('control-panel').classList.toggle('open');
+});
+document.getElementById('btn-argo-toggle').addEventListener('click', ()=>{
+  document.getElementById('argo-panel').classList.toggle('open');
+});
+
+/* ===================================================================
+   CONTROL PANEL WIRING
+   =================================================================== */
+document.getElementById('select-basin').addEventListener('change', (e)=>{
+  document.getElementById('badge-basin').textContent = e.target.value;
+});
+
+const legendMeta = [
+  { title:'Temperature', min:'Warm', max:'Cold', gradient:'linear-gradient(90deg,#e8895b,#e6b95c,#4d8b7c,#22c1c9,#0a1a26)' },
+  { title:'Salinity', min:'Fresher', max:'Saltier', gradient:'linear-gradient(90deg,#5be8e0,#22c1c9,#4d8b7c,#0a1a26,#050d14)' },
+  { title:'Oxygen', min:'Oxygenated', max:'Hypoxic', gradient:'linear-gradient(90deg,#5bd48a,#e6b95c,#e0616b,#8a3a42,#050d14)' },
+];
+document.querySelectorAll('.var-chip').forEach(chip=>{
+  chip.addEventListener('click', ()=>{
+    document.querySelectorAll('.var-chip').forEach(c=>c.classList.remove('active'));
+    chip.classList.add('active');
+    state.variable = parseInt(chip.dataset.var, 10);
+    oceanUniforms.uVar.value = state.variable;
+    const m = legendMeta[state.variable];
+    document.getElementById('legend-title').textContent = m.title;
+    document.getElementById('legend-bar').style.background = m.gradient;
+    document.getElementById('legend-min').textContent = m.min;
+    document.getElementById('legend-max').textContent = m.max;
+  });
+});
+
+const depthSlider = document.getElementById('depth-slider');
+const depthReadout = document.getElementById('depth-readout');
+const depthStatus = document.getElementById('depth-status');
+function refreshDepthReadout(){
+  const d = parseInt(depthSlider.value, 10);
+  depthReadout.textContent = d + ' m';
+  const exact = d % 50 === 0;
+  depthStatus.textContent = exact ? 'Exact' : 'Interpolated';
+  depthStatus.className = 'status-tag ' + (exact ? 'status-exact' : 'status-interp');
+  refDepthPlane.position.y = depthToY(d);
+  refDepthPlane.visible = true;
+}
+depthSlider.addEventListener('input', refreshDepthReadout);
+
+document.querySelectorAll('[data-toggle]').forEach(sw=>{
+  sw.addEventListener('click', ()=>{
+    sw.classList.toggle('on');
+    const key = sw.dataset.toggle;
+    const on = sw.classList.contains('on');
+    if (key === 'currents'){ state.showCurrents = on; flowArrows.forEach(a=>a.visible = on); }
+    if (key === 'grid'){ state.showGrid = on; gridGroup.visible = on; }
+  });
+});
+
+const btnPlay = document.getElementById('btn-toggle-play');
+btnPlay.addEventListener('click', ()=>{
+  state.playing = !state.playing;
+  btnPlay.innerHTML = state.playing ? '&#9208;' : '&#9654;';
+});
+document.getElementById('btn-step-back').addEventListener('click', ()=>{ state.tNorm = (state.tNorm - 0.04 + 1) % 1; });
+document.getElementById('btn-step-fwd').addEventListener('click', ()=>{ state.tNorm = (state.tNorm + 0.04) % 1; });
+
+document.querySelectorAll('.view-mode-row button').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('.view-mode-row button').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    if (btn.dataset.viewmode === 'top'){
+      camera.position.set(0.1, 16, 0.1);
+    } else {
+      camera.position.set(9, 6, 12);
+    }
+  });
+});
+document.getElementById('btn-reset-cam').addEventListener('click', ()=>{
+  camera.position.set(9, 6, 12);
+  controls.target.set(0, -4, 0);
+});
+document.getElementById('btn-fullscreen').addEventListener('click', ()=>{
+  const el = document.getElementById('viewer-wrap');
+  if (!document.fullscreenElement) el.requestFullscreen();
+  else document.exitFullscreen();
+});
+
+document.getElementById('btn-goto-compare').addEventListener('click', ()=>{
+  showSubview('subview-compare');
+});
+
+/* ===================================================================
+   ARGO TABS
+   =================================================================== */
+document.querySelectorAll('[data-argotab]').forEach(tab=>{
+  tab.addEventListener('click', ()=>{
+    document.querySelectorAll('[data-argotab]').forEach(t=>t.classList.remove('active'));
+    tab.classList.add('active');
+    ['profile','trajectory','metadata'].forEach(name=>{
+      document.getElementById('argotab-'+name).style.display = (name === tab.dataset.argotab) ? 'block' : 'none';
+    });
+  });
+});
+
+/* ===================================================================
+   MINI CANVAS CHART HELPER (no external chart library)
+   =================================================================== */
+function drawLineChart(canvas, series, color){
+  if (!canvas) return;
+  const dpr = Math.min(devicePixelRatio,2);
+  const w = canvas.clientWidth, h = canvas.clientHeight;
+  canvas.width = w*dpr; canvas.height = h*dpr;
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr,dpr);
+  ctx.clearRect(0,0,w,h);
+  const pad = 10;
+  const min = Math.min(...series), max = Math.max(...series);
+  const range = (max-min) || 1;
+  ctx.strokeStyle = 'rgba(160,210,225,0.12)';
+  for(let i=0;i<4;i++){
+    const y = pad + (h-pad*2)*i/3;
+    ctx.beginPath(); ctx.moveTo(pad,y); ctx.lineTo(w-pad,y); ctx.stroke();
+  }
+  ctx.beginPath();
+  series.forEach((v,i)=>{
+    const x = pad + (w-pad*2) * (i/(series.length-1));
+    const y = pad + (h-pad*2) * (1 - (v-min)/range);
+    if (i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+  });
+  ctx.strokeStyle = color; ctx.lineWidth = 2; ctx.stroke();
+  const grad = ctx.createLinearGradient(0,0,0,h);
+  grad.addColorStop(0, color+'55'); grad.addColorStop(1, color+'00');
+  ctx.lineTo(w-pad, h-pad); ctx.lineTo(pad, h-pad); ctx.closePath();
+  ctx.fillStyle = grad; ctx.fill();
+}
+function seededSeries(seed, n, base, spread){
+  let s = seed;
+  const rnd = () => { s = (s*9301+49297) % 233280; return s/233280; };
+  const out = [];
+  let v = base;
+  for(let i=0;i<n;i++){ v += (rnd()-0.5)*spread; out.push(v); }
+  return out;
+}
+
+/* redraw analysis + compare charts on their own triggers */
+document.getElementById('analysis-var').addEventListener('change', renderAnalysisCharts);
+function renderAnalysisCharts(){
+  const v = document.getElementById('analysis-var').selectedIndex;
+  const colors = ['#e8895b','#22c1c9','#5bd48a'];
+  drawLineChart(document.getElementById('analysis-chart-1'), seededSeries(10+v, 24, 27-v*2, 1.4), colors[v]);
+  drawLineChart(document.getElementById('analysis-chart-2'), seededSeries(50+v, 24, 0, 0.8), colors[v]);
+}
+
+/* ===================================================================
+   COMPARE VIEW
+   =================================================================== */
+const compareA = document.getElementById('compare-a');
+const compareB = document.getElementById('compare-b');
+function populateCompareSelects(){
+  [compareA, compareB].forEach((sel, si)=>{
+    sel.innerHTML='';
+    floatDefs.forEach((f,i)=>{
+      const opt = document.createElement('option');
+      opt.value = i; opt.textContent = 'Float ' + f.id;
+      if (i === si) opt.selected = true;
+      sel.appendChild(opt);
+    });
+  });
+  renderCompare();
+}
+function renderCompare(){
+  const a = floatDefs[parseInt(compareA.value,10)];
+  const b = floatDefs[parseInt(compareB.value,10)];
+  if (!a || !b) return;
+  const tempA = 28 - a.parkDepth/500;
+  const tempB = 28 - b.parkDepth/500;
+  document.getElementById('cmp-a-val').textContent = tempA.toFixed(1)+'\u00b0';
+  document.getElementById('cmp-b-val').textContent = tempB.toFixed(1)+'\u00b0';
+  const diff = tempA - tempB;
+  const diffEl = document.getElementById('cmp-diff-val');
+  diffEl.textContent = (diff>=0?'+':'') + diff.toFixed(1)+'\u00b0';
+  diffEl.parentElement.className = 'compare-col ' + (diff>=0?'diff-pos':'diff-neg');
+  const sameBasin = true;
+  document.getElementById('elig-badge').className = 'elig-badge ' + (sameBasin ? 'elig-eligible' : 'elig-partial');
+  document.getElementById('elig-badge').innerHTML = sameBasin ? '&#10003; Eligible for comparison' : '! Partially comparable';
+}
+compareA.addEventListener('change', renderCompare);
+compareB.addEventListener('change', renderCompare);
+
+/* ===================================================================
+   THREE.JS SCENE — mounted inside #viewer-wrap / #viewer-canvas
+   =================================================================== */
+const viewerWrap = document.getElementById('viewer-wrap');
+const canvasEl = document.getElementById('viewer-canvas');
+
+const scene = new THREE.Scene();
+scene.background = null;
+scene.fog = new THREE.FogExp2(0x040d13, 0.02);
+
+const camera = new THREE.PerspectiveCamera(42, 1, 0.1, 200);
+camera.position.set(9, 6, 12);
+
+const renderer = new THREE.WebGLRenderer({ canvas: canvasEl, antialias:true, alpha:true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.target.set(0, -4, 0);
+controls.minDistance = 8;
+controls.maxDistance = 34;
+controls.maxPolarAngle = Math.PI * 0.49;
+controls.enableDamping = true;
+
+scene.add(new THREE.AmbientLight(0x88aacc, 0.9));
+const sun = new THREE.DirectionalLight(0xffffff, 0.6);
+sun.position.set(10, 20, 8);
+scene.add(sun);
+
+function onViewerResize(){
+  const w = viewerWrap.clientWidth || 800;
+  const h = viewerWrap.clientHeight || 600;
+  camera.aspect = w / h;
+  camera.updateProjectionMatrix();
+  renderer.setSize(w, h, false);
+}
+new ResizeObserver(onViewerResize).observe(viewerWrap);
+
+/* ---------- ocean volume ---------- */
+const BOX_W = 11, BOX_D = 8, BOX_H = 8;
+const MAX_DEPTH_M = 1000;
+const yTop = 0, yBottom = -BOX_H;
+const depthToY = (m) => yTop - (m / MAX_DEPTH_M) * BOX_H;
+
+const oceanUniforms = {
+  uTop: { value: yTop },
+  uBottom: { value: yBottom },
+  uTime: { value: 0 },
+  uVar: { value: 0 },
+};
+
+const oceanMaterial = new THREE.ShaderMaterial({
+  uniforms: oceanUniforms,
+  transparent: true,
+  side: THREE.DoubleSide,
+  depthWrite: false,
+  vertexShader: `
+    varying vec3 vPos;
+    void main(){
+      vPos = position;
+      gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0);
+    }
+  `,
+  fragmentShader: `
+    varying vec3 vPos;
+    uniform float uTop, uBottom, uTime;
+    uniform int uVar;
+
+    vec3 rampTemp(float t){
+      vec3 c0=vec3(0.91,0.54,0.36), c1=vec3(0.90,0.73,0.36), c2=vec3(0.30,0.55,0.49), c3=vec3(0.13,0.76,0.79), c4=vec3(0.04,0.10,0.15);
+      if (t<0.12) return mix(c0,c1,t/0.12);
+      if (t<0.30) return mix(c1,c2,(t-0.12)/0.18);
+      if (t<0.60) return mix(c2,c3,(t-0.30)/0.30);
+      return mix(c3,c4,(t-0.60)/0.40);
+    }
+    vec3 rampSalinity(float t){
+      vec3 c0=vec3(0.36,0.91,0.88), c1=vec3(0.13,0.76,0.79), c2=vec3(0.30,0.55,0.49), c3=vec3(0.04,0.10,0.15), c4=vec3(0.02,0.05,0.08);
+      if (t<0.25) return mix(c0,c1,t/0.25);
+      if (t<0.55) return mix(c1,c2,(t-0.25)/0.30);
+      if (t<0.80) return mix(c2,c3,(t-0.55)/0.25);
+      return mix(c3,c4,(t-0.80)/0.20);
+    }
+    vec3 rampOxygen(float t){
+      vec3 c0=vec3(0.36,0.83,0.54), c1=vec3(0.90,0.73,0.36), c2=vec3(0.88,0.38,0.42), c3=vec3(0.34,0.14,0.16), c4=vec3(0.02,0.05,0.08);
+      if (t<0.20) return mix(c0,c1,t/0.20);
+      if (t<0.45) return mix(c1,c2,(t-0.20)/0.25);
+      if (t<0.75) return mix(c2,c3,(t-0.45)/0.30);
+      return mix(c3,c4,(t-0.75)/0.25);
+    }
+
+    void main(){
+      float t = clamp((uTop - vPos.y) / (uTop - uBottom), 0.0, 1.0);
+      vec3 col = uVar==0 ? rampTemp(t) : (uVar==1 ? rampSalinity(t) : rampOxygen(t));
+      float alpha = mix(0.55, 0.22, t);
+      float band = 0.5 + 0.5*sin(vPos.y*10.0 + uTime*0.3);
+      col += band*0.015;
+      gl_FragColor = vec4(col, alpha);
+    }
+  `
+});
+
+const oceanBox = new THREE.Mesh(new THREE.BoxGeometry(BOX_W, BOX_H, BOX_D), oceanMaterial);
+oceanBox.position.y = yTop - BOX_H/2;
+scene.add(oceanBox);
+
+const edges = new THREE.LineSegments(
+  new THREE.EdgesGeometry(new THREE.BoxGeometry(BOX_W, BOX_H, BOX_D)),
+  new THREE.LineBasicMaterial({ color:0x9fd3e8, transparent:true, opacity:0.35 })
+);
+edges.position.copy(oceanBox.position);
+scene.add(edges);
+
+const gridGroup = new THREE.Group();
+for (let d = 0; d <= MAX_DEPTH_M; d += 200){
+  const y = depthToY(d);
+  const g = new THREE.BufferGeometry().setFromPoints([
+    new THREE.Vector3(-BOX_W/2, y,  BOX_D/2), new THREE.Vector3( BOX_W/2, y,  BOX_D/2),
+    new THREE.Vector3( BOX_W/2, y, -BOX_D/2), new THREE.Vector3(-BOX_W/2, y, -BOX_D/2),
+    new THREE.Vector3(-BOX_W/2, y,  BOX_D/2),
+  ]);
+  gridGroup.add(new THREE.Line(g, new THREE.LineBasicMaterial({ color:0x9fd3e8, transparent:true, opacity:0.14 })));
+}
+scene.add(gridGroup);
+
+/* selected-depth reference plane, driven by the sidebar slider */
+const refDepthPlane = new THREE.Mesh(
+  new THREE.PlaneGeometry(BOX_W, BOX_D),
+  new THREE.MeshBasicMaterial({ color:0x5be8e0, transparent:true, opacity:0.12, side:THREE.DoubleSide })
+);
+refDepthPlane.rotation.x = Math.PI/2;
+refDepthPlane.visible = false;
+scene.add(refDepthPlane);
+
+/* ---------- coastline slab ---------- */
+function makeLandTexture(){
+  const c = document.createElement('canvas'); c.width = c.height = 512;
+  const ctx = c.getContext('2d');
+  ctx.fillStyle = '#0e2433'; ctx.fillRect(0,0,512,512);
+  ctx.fillStyle = 'rgba(77,139,124,0.85)';
+  for(let i=0;i<60;i++){
+    const x = Math.random()*512, y = Math.random()*260, r = 20+Math.random()*60;
+    ctx.beginPath(); ctx.arc(x,y,r,0,Math.PI*2); ctx.fill();
+  }
+  ctx.fillStyle = 'rgba(200,190,150,0.5)';
+  ctx.fillRect(0, 250, 512, 20);
+  return new THREE.CanvasTexture(c);
+}
+const land = new THREE.Mesh(
+  new THREE.PlaneGeometry(BOX_W, BOX_D*0.5),
+  new THREE.MeshBasicMaterial({ map: makeLandTexture(), transparent:true, opacity:0.9 })
+);
+land.rotation.x = -Math.PI/2;
+land.position.set(0, 0.02, -BOX_D/2 - BOX_D*0.5/2 + 0.5);
+scene.add(land);
+
+/* ---------- current arrows ---------- */
+function makeArrow(color){
+  const group = new THREE.Group();
+  const shaft = new THREE.Mesh(new THREE.CylinderGeometry(0.018,0.018,0.42,6), new THREE.MeshBasicMaterial({color}));
+  shaft.rotation.z = Math.PI/2; shaft.position.x = 0.2;
+  const head = new THREE.Mesh(new THREE.ConeGeometry(0.05,0.13,6), new THREE.MeshBasicMaterial({color}));
+  head.rotation.z = -Math.PI/2; head.position.x = 0.45;
+  group.add(shaft, head);
+  return group;
+}
+const flowArrows = [];
+[80,300,550,800].forEach(d=>{
+  const y = depthToY(d);
+  for(let i=0;i<6;i++){
+    const arrow = makeArrow(0xbfe9f5);
+    arrow.traverse(o=>{ if(o.material){ o.material.transparent = true; o.material.opacity = 0.5; }});
+    arrow.position.set(
+      THREE.MathUtils.randFloatSpread(BOX_W*0.8), y, THREE.MathUtils.randFloatSpread(BOX_D*0.8)
+    );
+    arrow.rotation.y = Math.random()*Math.PI*2;
+    arrow.userData.speed = 0.12 + Math.random()*0.18;
+    scene.add(arrow);
+    flowArrows.push(arrow);
+  }
+});
+
+/* ---------- Argo floats ---------- */
+const floatDefs = [
+  { id:'6903798', wmo:'6903798', color:0xe8895b, x:2.2, z:1.2, surfaceDepth:5, parkDepth:900, phase:0.0, status:'Active' },
+  { id:'5906234', wmo:'5906234', color:0x5bd48a, x:-2.6, z:-0.8, surfaceDepth:5, parkDepth:500, phase:0.4, status:'Active' },
+  { id:'5906512', wmo:'5906512', color:0x5bd48a, x:0.4, z:2.4, surfaceDepth:5, parkDepth:350, phase:0.7, status:'Active' },
+];
+
+const floats = floatDefs.map(def=>{
+  const sphere = new THREE.Mesh(
+    new THREE.SphereGeometry(0.13, 16, 16),
+    new THREE.MeshStandardMaterial({ color:def.color, emissive:def.color, emissiveIntensity:0.6 })
+  );
+  scene.add(sphere);
+  const line = new THREE.Line(
+    new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), new THREE.Vector3()]),
+    new THREE.LineDashedMaterial({ color:def.color, dashSize:0.1, gapSize:0.08, transparent:true, opacity:0.7 })
+  );
+  scene.add(line);
+  return { def, sphere, line };
+});
+
+function floatDepthAt(def, tNorm){
+  const cycle = (tNorm + def.phase) % 1;
+  const goingDown = cycle < 0.5;
+  const local = goingDown ? cycle/0.5 : 1 - (cycle-0.5)/0.5;
+  return def.surfaceDepth + local * (def.parkDepth - def.surfaceDepth);
+}
+
+/* depth axis labels (screen-anchored) */
+const depthAxisLayer = document.getElementById('depth-axis-layer');
+const axisEls = [0,200,500,1000].map(d=>{
+  const el = document.createElement('div');
+  el.className = 'tick';
+  el.innerHTML = `<span class="bar"></span>${d} m`;
+  depthAxisLayer.appendChild(el);
+  return { d, el };
+});
+
+/* ---------- float selection + panel ---------- */
+const tooltip = document.getElementById('float-tooltip');
+const raycaster = new THREE.Raycaster();
+const mouse = new THREE.Vector2();
+
+function selectFloat(idx){
+  state.selectedFloatIdx = idx;
+  const f = floats[idx];
+  document.getElementById('argo-empty-state').style.display = 'none';
+  document.getElementById('argo-detail').style.display = 'block';
+  document.getElementById('d-id').textContent = f.def.id;
+  document.getElementById('d-status').textContent = f.def.status;
+  document.getElementById('d-cycle').textContent = '#' + (12 + idx*3);
+  document.getElementById('d-park').textContent = f.def.parkDepth + ' m';
+  document.getElementById('m-wmo').textContent = f.def.wmo;
+  document.getElementById('m-deployed').textContent = '14 Jan 2024';
+  document.getElementById('m-lasttx').textContent = '10 Aug 2026';
+  document.getElementById('prov-wmo').textContent = f.def.wmo;
+  const seed = parseInt(f.def.id.slice(-3),10);
+  drawLineChart(document.getElementById('profile-chart'), seededSeries(seed, 20, 27, 1.2).map((v,i)=>27-i*(20/f.def.parkDepth)*3+ (v-27)*0.3), '#e8895b');
+  drawLineChart(document.getElementById('trajectory-chart'), seededSeries(seed+7, 16, 15, 0.3), '#5be8e0');
+  showToast('Float ' + f.def.id + ' selected');
+}
+
+renderer.domElement.addEventListener('click', (e)=>{
+  const rect = renderer.domElement.getBoundingClientRect();
+  mouse.x = ((e.clientX-rect.left)/rect.width)*2-1;
+  mouse.y = -((e.clientY-rect.top)/rect.height)*2+1;
+  raycaster.setFromCamera(mouse, camera);
+  const hits = raycaster.intersectObjects(floats.map(f=>f.sphere));
+  if (hits.length){
+    const idx = floats.findIndex(f=>f.sphere === hits[0].object);
+    selectFloat(idx);
+  }
+});
+
+renderer.domElement.addEventListener('mousemove', (e)=>{
+  const rect = renderer.domElement.getBoundingClientRect();
+  mouse.x = ((e.clientX-rect.left)/rect.width)*2-1;
+  mouse.y = -((e.clientY-rect.top)/rect.height)*2+1;
+  raycaster.setFromCamera(mouse, camera);
+  const hits = raycaster.intersectObjects(floats.map(f=>f.sphere));
+  if (hits.length){
+    const idx = floats.findIndex(f=>f.sphere === hits[0].object);
+    const f = floats[idx].def;
+    tooltip.style.display = 'block';
+    tooltip.style.left = (e.clientX - rect.left + 14) + 'px';
+    tooltip.style.top = (e.clientY - rect.top - 10) + 'px';
+    tooltip.innerHTML = `<div class="t-title">Argo Float ${f.id}</div>
+      <div class="t-row"><span>Status</span><b>${f.status}</b></div>
+      <div class="t-row"><span>Park depth</span><b>${f.parkDepth} m</b></div>`;
+  } else {
+    tooltip.style.display = 'none';
+  }
+});
+
+/* ===================================================================
+   RENDER LOOP
+   =================================================================== */
+const clock = new THREE.Clock();
+function animate(){
+  requestAnimationFrame(animate);
+  const dt = clock.getDelta();
+  oceanUniforms.uTime.value += dt;
+
+  if (state.playing){
+    state.tNorm = (state.tNorm + dt*0.02) % 1;
+  }
+
+  floats.forEach(f=>{
+    const depth = floatDepthAt(f.def, state.tNorm);
+    const y = depthToY(depth);
+    f.sphere.position.set(f.def.x, y, f.def.z);
+    f.line.geometry.setFromPoints([new THREE.Vector3(f.def.x, yTop, f.def.z), new THREE.Vector3(f.def.x, y, f.def.z)]);
+    f.line.geometry.computeBoundingSphere();
+    f.line.computeLineDistances();
+  });
+
+  flowArrows.forEach(a=>{
+    a.position.x += Math.cos(a.rotation.y) * a.userData.speed * dt;
+    a.position.z += Math.sin(a.rotation.y) * a.userData.speed * dt;
+    if (a.position.x > BOX_W/2) a.position.x = -BOX_W/2;
+    if (a.position.x < -BOX_W/2) a.position.x = BOX_W/2;
+    if (a.position.z > BOX_D/2) a.position.z = -BOX_D/2;
+    if (a.position.z < -BOX_D/2) a.position.z = BOX_D/2;
+  });
+
+  axisEls.forEach(({d, el})=>{
+    const y = depthToY(d);
+    const p = new THREE.Vector3(-BOX_W/2, y, BOX_D/2).project(camera);
+    const w = viewerWrap.clientWidth, h = viewerWrap.clientHeight;
+    el.style.left = ((p.x*0.5+0.5)*w - 44) + 'px';
+    el.style.top = ((1-(p.y*0.5+0.5))*h) + 'px';
+  });
+
+  controls.update();
+  renderer.render(scene, camera);
+}
+
+/* ===================================================================
+   LANDING BACKGROUND (lightweight 2D canvas bubble field)
+   =================================================================== */
+function initLandingBackground(){
+  const c = document.getElementById('landing-canvas');
+  const ctx = c.getContext('2d');
+  let bubbles = [];
+  function resize(){ c.width = innerWidth; c.height = innerHeight; }
+  function seed(){
+    bubbles = Array.from({length:46}, ()=>({
+      x: Math.random()*innerWidth, y: innerHeight + Math.random()*innerHeight,
+      r: 1.5+Math.random()*3.5, s: 0.2+Math.random()*0.6, a: 0.08+Math.random()*0.2
+    }));
+  }
+  resize(); seed();
+  addEventListener('resize', ()=>{ resize(); });
+  function loop(){
+    ctx.fillStyle = '#050d14';
+    ctx.fillRect(0,0,c.width,c.height);
+    const grad = ctx.createRadialGradient(c.width*0.3,c.height*0.1,0,c.width*0.3,c.height*0.1,c.width*0.8);
+    grad.addColorStop(0,'rgba(34,193,201,0.08)'); grad.addColorStop(1,'rgba(5,13,20,0)');
+    ctx.fillStyle = grad; ctx.fillRect(0,0,c.width,c.height);
+    bubbles.forEach(b=>{
+      b.y -= b.s;
+      if (b.y < -10){ b.y = c.height+10; b.x = Math.random()*c.width; }
+      ctx.beginPath();
+      ctx.fillStyle = `rgba(94,232,224,${b.a})`;
+      ctx.arc(b.x, b.y, b.r, 0, Math.PI*2);
+      ctx.fill();
+    });
+    requestAnimationFrame(loop);
+  }
+  loop();
+}
+
+/* ===================================================================
+   INIT
+   =================================================================== */
+initLandingBackground();
+onViewerResize();
+animate();
+refreshDepthReadout();
+populateCompareSelects();
+renderAnalysisCharts();
+</script>
+</body>
+</html>
