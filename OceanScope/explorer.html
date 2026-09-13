@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Abyssal &middot; Explorer</title>
+<title>SagarDrishti &middot; Explorer</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
@@ -235,7 +235,7 @@
 
   <div class="topbar">
     <div class="topbar-left">
-      <div class="brand"><span class="brand-mark"></span>Abyssal</div>
+      <div class="brand"><span class="brand-mark"></span>SagarDrishti</div>
       <div class="topbar-nav">
         <button class="active" data-target="explore">Explore</button>
         <button data-target="compare">Compare</button>
@@ -516,7 +516,7 @@ import { OrbitControls } from "three/addons/controls/OrbitControls.js";
    Real navigation (not a scroll/section swap) is what got us here,
    and signing out sends the user back the same way.
    =================================================================== */
-const role = localStorage.getItem('abyssal_role');
+const role = localStorage.getItem('SagarDrishti_role');
 if (!role){
   window.location.href = 'index.html';
 }
@@ -526,7 +526,7 @@ document.getElementById('role-status-text').textContent = role === 'researcher'
   ? 'Live data \u00b7 analytics session'
   : 'Live data \u00b7 guided session';
 document.getElementById('avatar-initial').addEventListener('click', ()=>{
-  localStorage.removeItem('abyssal_role');
+  localStorage.removeItem('SagarDrishti_role');
   window.location.href = 'index.html';
 });
 

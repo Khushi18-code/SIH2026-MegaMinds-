@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Abyssal &middot; Argo Float Ocean Explorer</title>
+<title>SagarDrishti &middot; Argo Float Ocean Explorer</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
@@ -92,7 +92,7 @@
 <div class="view active" id="view-landing">
   <canvas id="landing-canvas"></canvas>
   <nav class="landing-nav">
-    <div class="brand"><span class="brand-mark"></span>Abyssal</div>
+    <div class="brand"><span class="brand-mark"></span>SagarDrishti</div>
     <div class="landing-nav-links">
       <span data-scroll="feature-grid">Product</span>
       <span data-scroll="principle-strip">Data</span>
@@ -124,7 +124,7 @@
 <div class="view" id="view-login">
   <div class="login-wrap">
     <div class="login-card">
-      <h2>How are you using Abyssal?</h2>
+      <h2>How are you using SagarDrishti?</h2>
       <p>This sets up your workspace. You can switch later by signing in again.</p>
       <div class="role-grid">
         <button class="role-card" data-role="researcher" id="role-researcher">
@@ -173,7 +173,7 @@ function showToast(msg){
 document.querySelectorAll('.role-card').forEach(card=>{
   card.addEventListener('click', ()=>{
     const role = card.dataset.role;
-    localStorage.setItem('abyssal_role', role);
+    localStorage.setItem('SagarDrishti_role', role);
     showToast(role === 'researcher' ? 'Signed in as Researcher' : 'Signed in as Education user');
     setTimeout(()=>{ window.location.href = 'explorer.html'; }, 350);
   });
