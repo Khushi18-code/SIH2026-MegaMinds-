@@ -1,0 +1,12 @@
+The idea is to bring ocean model data and in-situ observations into one interactive workspace, instead of making users work with separate tools.
+In our prototype, we use HYCOM as the model source and provide ocean variables such as temperature, salinity, oxygen and chlorophyll for exploration.
+Users can explore the ocean in 3D and top-down views, change the region, variable, time and depth, and see the ocean field together with Argo floats.
+When a user selects an Argo float, they can open its profile, trajectory and metadata, and move into the model-versus-observation comparison.
+Here, the system checks whether the model and observation are actually comparable — including variable, units, spatial proximity, timestamp and depth.
+We also make depth matching transparent. For example, if an observation is at a depth that does not exactly match a model level, the interface identifies it as interpolated, instead of hiding that processing step.
+We then show the model and observation values together, their difference, and validation measures such as RMSE and Bias.
+Our main innovation is traceability.
+We show the data provenance, quality information, and matching process, so researchers can understand not only the result, but also how that result was produced.
+We also demonstrate the effect of localized EnOI data assimilation through our Raw Model and Assimilated Model views.
+Finally, Sagar-Drishti has two modes. Researcher mode provides detailed analysis, quality information and comparison tools, while Education mode provides a simpler guided experience for learning about the ocean using real-world observation concepts.
+So our key idea is simple: explore the ocean in 3D, compare the model with observations, make the comparison traceable, and then visualize the effect of data assimilation.
